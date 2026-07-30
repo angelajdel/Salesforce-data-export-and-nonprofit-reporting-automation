@@ -1,0 +1,5 @@
+simple-salesforce>=1.12
+python-dotenv>=1.0
+requests>=2.31
+pandas>=2.0
+openpyxl>=3.1
