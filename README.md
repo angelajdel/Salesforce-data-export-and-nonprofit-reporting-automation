@@ -289,3 +289,51 @@ It'll ask for:
 Nothing you type is saved to a file or shown on screen again — it goes
 straight into GitHub's encrypted secrets storage. Revoke the GitHub token
 afterward, same as with any setup task.
+
+## Running Impact Hub fully locally — no GitHub required
+
+Everything above assumes GitHub Actions and a hosted URL. If your client
+would rather never touch GitHub at all — no account, no repo, no Secrets —
+there's a simpler, fully local alternative that uses the exact same
+underlying scripts.
+
+**One-time setup:**
+```bash
+pip install -r requirements.txt
+cp .env.example .env
+```
+Fill in real Salesforce credentials in `.env` (see the setup instructions
+at the top of `scripts/fetch_salesforce_data.py`).
+
+**Every time you want fresh data:**
+```bash
+python run_local.py
+```
+Or just double-click **`Run Impact Hub.command`** (Mac) or
+**`Run Impact Hub.bat`** (Windows) — no terminal required at all.
+
+This pulls fresh Salesforce data, cleans it, opens the folder containing
+the two cleaned CSVs, and opens `impact_hub.html` in your browser — the
+only manual step left is dragging those two files onto the matching cards
+in Impact Hub, since browsers are deliberately not allowed to read files
+off your disk without you choosing them yourself.
+
+**The honest trade-off versus the GitHub version:** this only runs when
+someone actually runs it — there's no cloud automation keeping data fresh
+in the background, and each person running it gets their own local copy
+rather than everyone sharing one live website. If you want it to run on a
+schedule anyway, `run_local.py`'s own instructions cover setting that up
+with your computer's Task Scheduler (Windows) or cron (Mac/Linux) — it
+just requires the computer to be on at the scheduled time, unlike the
+GitHub Actions version.
+
+**To hand this to your client without GitHub at all:** download this
+entire folder (or just the files listed below) and send it to them
+directly — email, a shared drive, however you'd normally share files.
+They only need:
+- `impact_hub.html`
+- `run_local.py`
+- `Run Impact Hub.command` / `Run Impact Hub.bat`
+- `requirements.txt`
+- `.env.example`
+- the `scripts/` folder
