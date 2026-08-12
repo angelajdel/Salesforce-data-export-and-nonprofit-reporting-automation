@@ -1,0 +1,21 @@
+Donor ID,Donor Name,Email,Amount,Close Date,Campaign,Donation Type
+006TEST001,Test Donor,test.donor@test.com,500,2026-01-05,General Fund,One-Time
+006B1C2D001,Harold Whitmore,harold.whitmore@email.com,2500,2026-01-06,Winter Appeal,One-Time
+006B1C2D002,Susan Lee,susan.lee@email.com,150,2026-01-09,General Fund,Monthly
+006B1C2D003,Community Bank Foundation,giving@communitybank.org,10000,2026-01-11,Corporate Match,One-Time
+006B1C2D004,Patricia Nguyen,patricia.nguyen@email.com,75,2026-01-14,General Fund,Monthly
+006B1C2D004,Patricia Nguyen,patricia.nguyen@email.com,75,2026-01-14,General Fund,Monthly
+006B1C2D005,Michael O'Brien,michael.obrien@email.com,1200,2026-01-17,Winter Appeal,One-Time
+006DEMO001,Demo Donor,demo.donor@example.com,100,2026-01-20,General Fund,One-Time
+006B1C2D006,Rachel Adams,rachel.adams@email.com,300,2026-01-23,General Fund,Monthly
+006B1C2D007,TheFord Family Trust,contact@fordtrust.org,15000,2026-01-26,Major Gifts,One-Time
+006B1C2D008,Kevin Park,kevin.park@email.com,60,2026-01-29,General Fund,Monthly
+006B1C2D009,Diane Foster,diane.foster@email.com,850,2026-02-03,Winter Appeal,One-Time
+006B1C2D010,Anthony Ruiz,anthony.ruiz@email.com,220,2026-02-06,General Fund,Monthly
+006B1C2D011,Lakeside Rotary Club,info@lakesiderotary.org,5000,2026-02-10,Corporate Match,One-Time
+006B1C2D005,Michael O'Brien,michael.obrien@email.com,1200,2026-01-17,Winter Appeal,One-Time
+006TESTQA02,QA Donation,qa.donor@test.com,25,2026-02-13,General Fund,One-Time
+006B1C2D012,Ellen Marsh,ellen.marsh@email.com,400,2026-02-17,General Fund,Monthly
+006B1C2D013,George Thompson,george.thompson@email.com,1800,2026-02-20,Major Gifts,One-Time
+006B1C2D014,Natalie Brooks,natalie.brooks@email.com,90,2026-02-23,General Fund,Monthly
+006B1C2D015,Riverside Auto Group,giving@riversideauto.com,7500,2026-02-26,Corporate Match,One-Time

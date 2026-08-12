@@ -132,3 +132,98 @@ The scripts assume these column names, matching the sample data:
 If your Salesforce export uses different column names, either rename the
 columns in the exported CSV before running the scripts, or tell me your
 actual export's column names and I'll adjust the scripts to match exactly.
+
+## Automatic Google Calendar invites (10 days before a deadline)
+
+The Deadlines tab inside Impact Hub can email a reminder with one click, but
+a browser tab can't act on a timer with nobody watching — that needs
+something that runs on a schedule independent of anyone having the tool
+open. This repo includes exactly that, using GitHub Actions (free for
+public and most private repos), and instead of an email, it creates a real
+**Google Calendar invite** — the assigned staff member gets it on their
+calendar with Accept/Decline, the same as any meeting invite.
+
+**How it works:** `deadlines.json` in this repo is the shared source of
+truth. Once a day, a GitHub Action runs
+`scripts/create_deadline_calendar_invites.py`, which checks every deadline
+and creates a calendar event — dated on the due date, with the assigned
+staff member added as an attendee — once it's within 10 days out. Google
+sends the invite itself; no one has to open anything.
+
+**One-time setup (Google Cloud side):**
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) →
+   create (or reuse) a project.
+2. **APIs & Services → Library** → enable the **Google Calendar API**.
+3. **APIs & Services → Credentials → Create Credentials → Service Account.**
+   Name it something like `impact-hub-calendar-bot`. No special roles needed.
+4. Open the new service account → **Keys → Add Key → Create new key → JSON.**
+   This downloads a `.json` key file — treat it like a password.
+5. In Google Calendar (the web app), pick or create the calendar these
+   invites should be created on (a shared team calendar works well).
+   Open its **Settings → Share with specific people** → add the service
+   account's email (looks like `impact-hub-calendar-bot@your-project.iam.gserviceaccount.com`,
+   found in the key file as `"client_email"`) → give it **"Make changes to
+   events"** permission.
+6. Still in that calendar's Settings, scroll to **"Integrate calendar"**
+   and copy the **Calendar ID**.
+
+**One-time setup (GitHub side):**
+1. Push this repo to GitHub if you haven't already.
+2. **Settings → Secrets and variables → Actions → New repository secret.**
+   Add two secrets:
+   - `GOOGLE_SERVICE_ACCOUNT_JSON` — paste the **entire contents** of the
+     downloaded key file
+   - `GOOGLE_CALENDAR_ID` — the Calendar ID from step 6 above
+3. That's it. `.github/workflows/deadline-reminders.yml` runs automatically
+   every day at 8am UTC. You can also trigger it manually anytime from the
+   repo's **Actions** tab, to test it without waiting for the schedule.
+
+**Keeping `deadlines.json` current:** whenever you update deadlines inside
+Impact Hub, click **"Download deadlines.json"** on the Export & Present step,
+then commit that file to the repo (drag-and-drop upload works fine, same as
+any other file). The automation only knows about what's in that file — it
+doesn't read the browser tool's storage directly, since that storage only
+exists while the Impact Hub page itself is open.
+
+**Change the invite window:** edit `--days-before 10` in
+`.github/workflows/deadline-reminders.yml` to whatever number of days you'd
+rather be warned. Each deadline tracks which thresholds it's already
+triggered (`remindersSent` in the JSON), so nothing gets double-invited for
+the same deadline.
+
+## Exporting into the Ignite FY26 Outcomes Template
+
+If your organization already tracks outcomes in the real Ignite-style FY26
+template (monthly/quarterly columns across Domains of Care, Reasons for
+Homelessness, Program Counts, Utilization, and per-program detail),
+Impact Hub can export directly into it without you retyping anything.
+
+**In Impact Hub:** on the Export & Present step, under "Export for the
+Ignite FY26 Outcomes Template," pick which month this data represents and
+click **"Download outcomes_export.json."** This is a small data file, not
+the spreadsheet itself.
+
+**Then run:**
+```bash
+python scripts/fill_ignite_template.py \
+    --template "Ignite_FY26_Outcomes_-_Template.xlsx" \
+    --data outcomes_export.json \
+    --month Aug \
+    --output "Ignite_FY26_Outcomes_-_Filled.xlsx"
+```
+
+This opens your **actual template file** and writes values only into the
+cells Impact Hub can compute:
+- Education and Employment (30+) domain
+- Reasons for Homelessness (matched by keyword to your configured Reason categories)
+- Total youth served, and active-youth counts per program
+- Utilization % (overall, and per program)
+
+Everything else in your template — New Enrollments, per-program exit
+detail, Street Outreach, Residential Therapy, quarterly/FY26 rollup columns,
+goals, and prior-year actuals — is left exactly as it already is. The
+script tells you exactly which rows it filled and which it skipped (and
+why), so nothing is silently missed.
+
+Run it again each month with that month's export, pointing `--template` at
+last month's filled copy if you want to build up the full year in one file.

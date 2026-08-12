@@ -1,0 +1,26 @@
+[
+  {
+    "task": "Pull cleaned Salesforce export",
+    "dueDate": "2026-08-20",
+    "assigneeName": "Marcus Bell",
+    "assigneeEmail": "marcus@yourorg.org",
+    "status": "not_started",
+    "remindersSent": []
+  },
+  {
+    "task": "Build Excel dashboard",
+    "dueDate": "2026-08-25",
+    "assigneeName": "Priya Sharma",
+    "assigneeEmail": "priya@yourorg.org",
+    "status": "not_started",
+    "remindersSent": []
+  },
+  {
+    "task": "Present at monthly board meeting",
+    "dueDate": "2026-09-05",
+    "assigneeName": "Dana Ruiz",
+    "assigneeEmail": "dana@yourorg.org",
+    "status": "not_started",
+    "remindersSent": []
+  }
+]

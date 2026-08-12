@@ -1,0 +1,42 @@
+name: Deadline Calendar Invites
+
+# Runs automatically every day at 8:00am UTC, checking for any deadline now
+# within 10 days and creating a Google Calendar invite for the assigned
+# staff member if one hasn't gone out yet. Also runnable manually from the
+# Actions tab (the "workflow_dispatch" trigger).
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # needed so the workflow can commit the updated "already invited" record
+
+jobs:
+  create-invites:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install google-api-python-client google-auth
+
+      - name: Create calendar invites
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_CALENDAR_ID: ${{ secrets.GOOGLE_CALENDAR_ID }}
+        run: python scripts/create_deadline_calendar_invites.py --file deadlines.json --days-before 10
+
+      - name: Commit updated invite record (if any invites were sent)
+        run: |
+          git config user.name "impact-hub-bot"
+          git config user.email "actions@github.com"
+          git add deadlines.json
+          git diff --staged --quiet || git commit -m "Record calendar invites sent [skip ci]"
+          git push

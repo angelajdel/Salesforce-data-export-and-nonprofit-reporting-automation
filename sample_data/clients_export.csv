@@ -1,0 +1,21 @@
+Client ID,First Name,Last Name,Email,Phone,Program,Enrollment Date,Status
+003TEST001,Test,User,test@test.com,555-0000,Job Training,2026-01-01,Active
+003A1B2C001,Maria,Gonzalez,maria.gonzalez@email.com,555-0142,Job Training,2026-01-08,Active
+003A1B2C002,James,Whitfield,jwhitfield@email.com,555-0198,Housing Assistance,2026-01-10,Active
+003A1B2C002,James,Whitfield,jwhitfield@email.com,555-0198,Housing Assistance,2026-01-10,Active
+003A1B2C003,Aisha,Patel,aisha.patel@email.com,555-0233,Food Security,2026-01-12,Active
+003A1B2C004,Devon,Carter,devon.carter@email.com,555-0287,Job Training,2026-01-15,Completed
+003A1B2C005,Linh,Nguyen,linh.nguyen@email.com,555-0311,Youth Mentorship,2026-01-18,Active
+003DEMO002,Sample,Client,demo@example.com,555-0000,Job Training,2026-01-20,Active
+003A1B2C006,Robert,Kim,robert.kim@email.com,555-0356,Housing Assistance,2026-01-22,Active
+003A1B2C007,Fatima,Al-Sayed,fatima.alsayed@email.com,555-0399,Food Security,2026-01-25,Active
+003A1B2C008,Marcus,Johnson,marcus.johnson@email.com,555-0421,Youth Mentorship,2026-01-28,Active
+003A1B2C009,Elena,Rossi,elena.rossi@email.com,555-0455,Job Training,2026-02-02,Active
+003A1B2C010,Samuel,Owusu,samuel.owusu@email.com,555-0487,Housing Assistance,2026-02-05,Active
+003A1B2C011,Priya,Sharma,priya.sharma@email.com,555-0512,Food Security,2026-02-09,Completed
+003A1B2C012,Tyler,Brooks,tyler.brooks@email.com,555-0548,Youth Mentorship,2026-02-11,Active
+003A1B2C005,Linh,Nguyen,linh.nguyen@email.com,555-0311,Youth Mentorship,2026-01-18,Active
+003TESTQA01,QA,Tester,qa.test@test.com,555-0000,Job Training,2026-02-14,Active
+003A1B2C013,Nadia,Ibrahim,nadia.ibrahim@email.com,555-0576,Job Training,2026-02-16,Active
+003A1B2C014,Carlos,Mendez,carlos.mendez@email.com,555-0601,Housing Assistance,2026-02-19,Active
+003A1B2C015,Grace,Okafor,grace.okafor@email.com,555-0634,Food Security,2026-02-22,Active

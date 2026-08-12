@@ -1,8 +1,0 @@
-.env
-raw_exports/
-outputs/*.csv
-outputs/*.json
-outputs/*.xlsx
-outputs/*.pptx
-__pycache__/
-*.pyc

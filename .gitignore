@@ -1,0 +1,31 @@
+# --- Secrets: never commit these ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Generated data & reports (recreate these anytime by re-running the scripts) ---
+raw_exports/
+outputs/*.csv
+outputs/*.json
+outputs/*.xlsx
+outputs/*.pptx
+outputs/*.pdf
+
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# --- Node (for build_presentation.js) ---
+node_modules/
+npm-debug.log*
+
+# --- OS / editor junk ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
