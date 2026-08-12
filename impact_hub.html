@@ -342,7 +342,7 @@
     <h2 class="section-title">Bring in this month's export</h2>
     <p class="section-desc">Export your Client and Donor reports from Salesforce as CSV, then drop them here — or paste the raw text straight from the export. Nothing leaves your browser.</p>
 
-    <div class="outcomes-card" style="margin-bottom:24px;">
+    <div class="outcomes-card" style="margin-bottom:24px;" id="githubSyncCard">
       <h3 style="margin:0 0 4px;">Sync from GitHub</h3>
       <p class="hint" style="margin:0 0 14px;">If your organization has the automated Salesforce sync set up, this pulls the most recently refreshed data directly — no export, no upload, no Salesforce login needed here.</p>
       <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
@@ -355,7 +355,7 @@
       <p class="lookup-hint" id="githubSyncStatus" style="margin-top:10px;"></p>
     </div>
 
-    <p class="section-desc" style="margin:0 0 14px; font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--slate);">— or import manually —</p>
+    <p class="section-desc" style="margin:0 0 14px; font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--slate);" id="manualImportDivider">— or import manually —</p>
 
     <div class="upload-grid">
       <div class="upload-card" id="cardClients">
@@ -945,20 +945,35 @@ document.getElementById('runCleanBtn').addEventListener('click', () => {
   goToStep(4);
 });
 
-// Automatically try to connect to Salesforce (via the synced GitHub data) the moment
-// the page loads -- no manual click, no CSV drag-and-drop needed, if the automation
-// is set up and has run at least once. Falls back to the manual import UI silently
-// if there's no data there yet.
-(async function autoConnectOnLoad() {
-  const synced = await syncFromGithub(true);
-  if (synced) {
-    runCleaning();
-    unlockStep(4); unlockStep(5); unlockStep(6);
-    goToStep(5);
-    renderOutcomeConfigUI();
-    renderOutcomes();
-  }
-})();
+// This same file is used both hosted on a real website (GitHub Pages) and
+// downloaded as a local file (the zip package). Only the hosted version has
+// any reason to talk to GitHub -- a local file:// page trying to "sync from
+// GitHub" defeats the entire point of the local, no-GitHub-involved package.
+// file:// is a real, reliable signal for "this is a downloaded copy," since
+// GitHub Pages (and any real hosting) is always http/https.
+const IS_LOCAL_FILE = window.location.protocol === 'file:';
+
+if (IS_LOCAL_FILE) {
+  const syncCard = document.getElementById('githubSyncCard');
+  if (syncCard) syncCard.style.display = 'none';
+  const divider = document.getElementById('manualImportDivider');
+  if (divider) divider.style.display = 'none';
+} else {
+  // Automatically try to connect to Salesforce (via the synced GitHub data) the
+  // moment the page loads -- no manual click, no CSV drag-and-drop needed, if
+  // the automation is set up and has run at least once. Falls back to the
+  // manual import UI silently if there's no data there yet.
+  (async function autoConnectOnLoad() {
+    const synced = await syncFromGithub(true);
+    if (synced) {
+      runCleaning();
+      unlockStep(4); unlockStep(5); unlockStep(6);
+      goToStep(5);
+      renderOutcomeConfigUI();
+      renderOutcomes();
+    }
+  })();
+}
 
 /* ============================= CLEANING ============================= */
 
