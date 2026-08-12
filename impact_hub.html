@@ -725,6 +725,46 @@ const PALETTE = ['#1B4B43', '#2E7D6B', '#C48A2E', '#9BC6BA', '#B4472F', '#7A8F87
 
 /* ============================= STATE ============================= */
 
+/* ============================= STORAGE COMPATIBILITY ============================= */
+/* window.storage only exists when this file is previewed inside Claude's own
+   artifact viewer. Everywhere else this file actually gets used -- GitHub
+   Pages, or double-clicked locally -- it doesn't exist at all, so every save
+   would silently fail. This falls back to the browser's own localStorage in
+   that case, so Deadlines, Grants, outcome settings, and saved snapshots
+   actually persist for real users, not just inside a Claude chat preview. */
+
+const LOCAL_PREFIX = 'impact-hub:';
+
+const appStorage = {
+  async get(key, shared) {
+    if (window.storage && typeof window.storage.get === 'function') {
+      try { return await window.storage.get(key, shared); } catch (err) { /* fall through to localStorage */ }
+    }
+    const raw = window.localStorage.getItem(LOCAL_PREFIX + key);
+    if (raw === null) throw new Error('Key not found: ' + key);
+    return { key, value: raw, shared: !!shared };
+  },
+  async set(key, value, shared) {
+    if (window.storage && typeof window.storage.set === 'function') {
+      try { return await window.storage.set(key, value, shared); } catch (err) { /* fall through to localStorage */ }
+    }
+    window.localStorage.setItem(LOCAL_PREFIX + key, value);
+    return { key, value, shared: !!shared };
+  },
+  async list(prefix, shared) {
+    if (window.storage && typeof window.storage.list === 'function') {
+      try { return await window.storage.list(prefix, shared); } catch (err) { /* fall through to localStorage */ }
+    }
+    const keys = [];
+    const fullPrefix = LOCAL_PREFIX + (prefix || '');
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && k.indexOf(fullPrefix) === 0) keys.push(k.slice(LOCAL_PREFIX.length));
+    }
+    return { keys, prefix, shared: !!shared };
+  },
+};
+
 const state = {
   clients: { headers: [], records: [], idCol: null, raw: '' },
   donors: { headers: [], records: [], idCol: null, raw: '' },
@@ -1502,7 +1542,7 @@ function outlookInviteUrl(title, details, dueDate, attendeeEmail) {
 
 async function loadDeadlines() {
   try {
-    const res = await window.storage.get('deadlines-list', true);
+    const res = await appStorage.get('deadlines-list', true);
     state.deadlines = res && res.value ? JSON.parse(res.value) : [];
   } catch (err) {
     state.deadlines = [];
@@ -1512,7 +1552,7 @@ async function loadDeadlines() {
 
 async function saveDeadlines() {
   try {
-    await window.storage.set('deadlines-list', JSON.stringify(state.deadlines), true);
+    await appStorage.set('deadlines-list', JSON.stringify(state.deadlines), true);
   } catch (err) {
     console.error('Could not save deadlines', err);
   }
@@ -1638,7 +1678,7 @@ const GRANT_STATUS_LABELS = {
 
 async function loadGrants() {
   try {
-    const res = await window.storage.get('grants-list', true);
+    const res = await appStorage.get('grants-list', true);
     state.grants = res && res.value ? JSON.parse(res.value) : [];
   } catch (err) {
     state.grants = [];
@@ -1648,7 +1688,7 @@ async function loadGrants() {
 
 async function saveGrants() {
   try {
-    await window.storage.set('grants-list', JSON.stringify(state.grants), true);
+    await appStorage.set('grants-list', JSON.stringify(state.grants), true);
   } catch (err) {
     console.error('Could not save grants', err);
   }
@@ -1792,7 +1832,7 @@ const OUTCOME_COLUMN_FIELDS = [
 
 async function loadOutcomeConfig() {
   try {
-    const res = await window.storage.get('outcome-config', true);
+    const res = await appStorage.get('outcome-config', true);
     if (res && res.value) state.outcomeConfig = JSON.parse(res.value);
   } catch (err) {
     // no saved config yet -- keep the seeded defaults
@@ -1803,7 +1843,7 @@ async function loadOutcomeConfig() {
 
 async function saveOutcomeConfigToStorage() {
   try {
-    await window.storage.set('outcome-config', JSON.stringify(state.outcomeConfig), true);
+    await appStorage.set('outcome-config', JSON.stringify(state.outcomeConfig), true);
   } catch (err) {
     console.error('Could not save outcome configuration', err);
   }
@@ -2087,7 +2127,7 @@ loadOutcomeConfig();
 async function refreshSavedStrip() {
   const strip = document.getElementById('savedStrip');
   try {
-    const listResult = await window.storage.list('monthly-summary:');
+    const listResult = await appStorage.list('monthly-summary:');
     if (!listResult || !listResult.keys || listResult.keys.length === 0) { strip.innerHTML = ''; return; }
     let html = '';
     for (const key of listResult.keys) {
@@ -2098,7 +2138,7 @@ async function refreshSavedStrip() {
     strip.querySelectorAll('.saved-chip').forEach(chip => {
       chip.addEventListener('click', async () => {
         try {
-          const res = await window.storage.get(chip.dataset.key);
+          const res = await appStorage.get(chip.dataset.key);
           if (res && res.value) {
             const snap = JSON.parse(res.value);
             state.stats = snap.stats;
@@ -2139,7 +2179,7 @@ document.getElementById('saveSnapshotBtn').addEventListener('click', async () =>
     savedAt: new Date().toISOString(),
   };
   try {
-    await window.storage.set('monthly-summary:' + month, JSON.stringify(snapshot));
+    await appStorage.set('monthly-summary:' + month, JSON.stringify(snapshot));
     refreshSavedStrip();
     const btn = document.getElementById('saveSnapshotBtn');
     const original = btn.textContent;
