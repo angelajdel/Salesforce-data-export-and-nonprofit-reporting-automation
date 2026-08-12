@@ -342,6 +342,21 @@
     <h2 class="section-title">Bring in this month's export</h2>
     <p class="section-desc">Export your Client and Donor reports from Salesforce as CSV, then drop them here — or paste the raw text straight from the export. Nothing leaves your browser.</p>
 
+    <div class="outcomes-card" style="margin-bottom:24px;">
+      <h3 style="margin:0 0 4px;">Sync from GitHub</h3>
+      <p class="hint" style="margin:0 0 14px;">If your organization has the automated Salesforce sync set up, this pulls the most recently refreshed data directly — no export, no upload, no Salesforce login needed here.</p>
+      <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+        <div style="flex:1; min-width:260px;">
+          <label class="field-label">GitHub repo (owner/name)</label>
+          <input id="githubRepoInput" type="text" value="angelajdel/Salesforce-data-export-and-nonprofit-reporting-automation" style="width:100%; padding:9px 10px; border:1px solid var(--card-line); border-radius:6px; font-size:13px;">
+        </div>
+        <button class="btn gold" id="syncFromGithubBtn">Sync now</button>
+      </div>
+      <p class="lookup-hint" id="githubSyncStatus" style="margin-top:10px;"></p>
+    </div>
+
+    <p class="section-desc" style="margin:0 0 14px; font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--slate);">— or import manually —</p>
+
     <div class="upload-grid">
       <div class="upload-card" id="cardClients">
         <h3>Clients</h3>
@@ -753,38 +768,47 @@ function unlockStep(n) {
 
 /* ============================= IMPORT HANDLING ============================= */
 
+function ingestData(kind, text, label) {
+  const key = kind.toLowerCase();
+  const tag = document.getElementById('tag' + kind);
+  const idRow = document.getElementById('idRow' + kind);
+  const idSelect = document.getElementById('idSelect' + kind);
+  const card = document.getElementById('card' + kind);
+
+  const parsed = parseCSV(text);
+  if (parsed.records.length === 0) return false;
+  state[key].headers = parsed.headers;
+  state[key].records = parsed.records;
+  state[key].raw = text;
+  const guessed = guessIdColumn(parsed.headers);
+  state[key].idCol = guessed;
+
+  idSelect.innerHTML = '';
+  parsed.headers.forEach(h => {
+    const opt = document.createElement('option');
+    opt.value = h; opt.textContent = h;
+    if (h === guessed) opt.selected = true;
+    idSelect.appendChild(opt);
+  });
+  idRow.style.display = 'flex';
+
+  tag.style.display = 'flex';
+  tag.querySelector('span:last-child').textContent = label + ' · ' + parsed.records.length + ' rows';
+  card.classList.add('has-data');
+  checkReady();
+  return true;
+}
+
 function wireUploadCard(kind) {
   const fileInput = document.getElementById('file' + kind);
   const pasteToggle = document.getElementById('pasteToggle' + kind);
   const pasteArea = document.getElementById('paste' + kind);
   const card = document.getElementById('card' + kind);
-  const tag = document.getElementById('tag' + kind);
-  const idRow = document.getElementById('idRow' + kind);
   const idSelect = document.getElementById('idSelect' + kind);
   const key = kind.toLowerCase();
 
   function ingest(text, label) {
-    const parsed = parseCSV(text);
-    if (parsed.records.length === 0) return;
-    state[key].headers = parsed.headers;
-    state[key].records = parsed.records;
-    state[key].raw = text;
-    const guessed = guessIdColumn(parsed.headers);
-    state[key].idCol = guessed;
-
-    idSelect.innerHTML = '';
-    parsed.headers.forEach(h => {
-      const opt = document.createElement('option');
-      opt.value = h; opt.textContent = h;
-      if (h === guessed) opt.selected = true;
-      idSelect.appendChild(opt);
-    });
-    idRow.style.display = 'flex';
-
-    tag.style.display = 'flex';
-    tag.querySelector('span:last-child').textContent = label + ' · ' + parsed.records.length + ' rows';
-    card.classList.add('has-data');
-    checkReady();
+    ingestData(kind, text, label);
   }
 
   fileInput.addEventListener('change', (e) => {
@@ -825,6 +849,48 @@ wireUploadCard('Donors');
 function checkReady() {
   document.getElementById('runCleanBtn').disabled = !(state.clients.records.length || state.donors.records.length);
 }
+
+document.getElementById('syncFromGithubBtn').addEventListener('click', async () => {
+  const repo = document.getElementById('githubRepoInput').value.trim();
+  const statusEl = document.getElementById('githubSyncStatus');
+  const btn = document.getElementById('syncFromGithubBtn');
+  if (!repo) { statusEl.textContent = 'Enter a repo in the format owner/name first.'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Syncing...';
+  statusEl.textContent = '';
+
+  const base = `https://raw.githubusercontent.com/${repo}/main/data/`;
+  let clientsOk = false, donorsOk = false;
+
+  try {
+    const clientsResp = await fetch(base + 'cleaned_clients.csv', { cache: 'no-store' });
+    if (clientsResp.ok) {
+      const text = await clientsResp.text();
+      clientsOk = ingestData('Clients', text, 'Synced from GitHub');
+    }
+  } catch (err) { /* handled by status message below */ }
+
+  try {
+    const donorsResp = await fetch(base + 'cleaned_donors.csv', { cache: 'no-store' });
+    if (donorsResp.ok) {
+      const text = await donorsResp.text();
+      donorsOk = ingestData('Donors', text, 'Synced from GitHub');
+    }
+  } catch (err) { /* handled by status message below */ }
+
+  btn.disabled = false;
+  btn.textContent = 'Sync now';
+
+  if (!clientsOk && !donorsOk) {
+    statusEl.textContent = 'Could not find data there yet. Make sure the automated Salesforce sync has run at least once (check the repo\'s Actions tab), and that the repo is public.';
+  } else {
+    const parts = [];
+    if (clientsOk) parts.push('clients');
+    if (donorsOk) parts.push('donors');
+    statusEl.textContent = '✓ Synced ' + parts.join(' and ') + ' from GitHub. Continue to "Clean this data" below.';
+  }
+});
 
 document.getElementById('runCleanBtn').addEventListener('click', () => {
   runCleaning();
