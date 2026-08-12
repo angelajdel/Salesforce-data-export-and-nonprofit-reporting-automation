@@ -1,0 +1,63 @@
+name: Salesforce Sync
+
+# Runs automatically every weekday morning, pulling fresh Client and Donor
+# data straight from Salesforce, cleaning it (removing test records and
+# duplicates), and committing the result back to this repo -- so the data
+# behind Impact Hub stays current without anyone running a script by hand.
+#
+# Also runnable manually anytime from the Actions tab (workflow_dispatch).
+on:
+  schedule:
+    - cron: "0 12 * * 1-5"   # 12:00 UTC, Monday-Friday
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # needed so the workflow can commit the refreshed data files
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Pull fresh data from Salesforce
+        env:
+          SF_AUTH_METHOD: ${{ secrets.SF_AUTH_METHOD }}
+          SF_USERNAME: ${{ secrets.SF_USERNAME }}
+          SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+          SF_SECURITY_TOKEN: ${{ secrets.SF_SECURITY_TOKEN }}
+          SF_CLIENT_ID: ${{ secrets.SF_CLIENT_ID }}
+          SF_CLIENT_SECRET: ${{ secrets.SF_CLIENT_SECRET }}
+          SF_DOMAIN: ${{ secrets.SF_DOMAIN }}
+          SF_CLIENT_SOQL: ${{ secrets.SF_CLIENT_SOQL }}
+          SF_DONOR_SOQL: ${{ secrets.SF_DONOR_SOQL }}
+        run: python scripts/fetch_salesforce_data.py --output-dir raw_exports
+
+      - name: Clean the exports
+        run: |
+          python scripts/clean_salesforce_export.py raw_exports/clients_export.csv \
+            --id-column "Id" \
+            --output data/cleaned_clients.csv \
+            --log data/clients_clean_log.json
+
+          python scripts/clean_salesforce_export.py raw_exports/donors_export.csv \
+            --id-column "Id" \
+            --output data/cleaned_donors.csv \
+            --log data/donors_clean_log.json
+
+      - name: Commit refreshed data (if anything changed)
+        run: |
+          git config user.name "impact-hub-bot"
+          git config user.email "actions@github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "Automated Salesforce sync [skip ci]"
+          git push

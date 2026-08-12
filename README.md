@@ -227,3 +227,41 @@ why), so nothing is silently missed.
 
 Run it again each month with that month's export, pointing `--template` at
 last month's filled copy if you want to build up the full year in one file.
+
+## Automated Salesforce sync (no manual export, ever)
+
+`scripts/fetch_salesforce_data.py` and `scripts/clean_salesforce_export.py`
+already existed for running by hand. This turns that into something that
+runs itself: a GitHub Action pulls fresh Client and Donor data straight from
+Salesforce, cleans it, and commits the result back to this repo automatically
+— every weekday morning, with nobody running anything.
+
+**How it works:** `.github/workflows/salesforce-sync.yml` runs on a
+schedule, authenticates to Salesforce using credentials stored as encrypted
+GitHub Secrets, runs the same SOQL queries and cleaning logic as the manual
+scripts, and commits the cleaned files to `data/cleaned_clients.csv` and
+`data/cleaned_donors.csv` in this repo.
+
+**One-time setup:**
+1. Set up a Salesforce Connected App (or username/password/security token)
+   — see the setup instructions at the top of `scripts/fetch_salesforce_data.py`
+   for exactly how, either auth method works here too.
+2. In your GitHub repo: **Settings → Secrets and variables → Actions → New
+   repository secret.** Add whichever set matches your auth method:
+   - Username/password flow: `SF_AUTH_METHOD` (`password`), `SF_USERNAME`,
+     `SF_PASSWORD`, `SF_SECURITY_TOKEN`, `SF_DOMAIN`
+   - Client credentials flow: `SF_AUTH_METHOD` (`client_credentials`),
+     `SF_CLIENT_ID`, `SF_CLIENT_SECRET`, `SF_DOMAIN`
+   - Optional, either way: `SF_CLIENT_SOQL` / `SF_DONOR_SOQL` to override the
+     default queries with your org's actual object/field names
+3. That's it. The workflow runs automatically every weekday at 12:00 UTC.
+   Trigger it manually anytime from the repo's **Actions** tab to test it
+   without waiting for the schedule.
+
+**What this does NOT do yet:** it keeps the data in this GitHub repo current
+automatically, but Impact Hub itself (the browser tool) still needs that
+data brought in via the Import step — it doesn't reach out and fetch
+anything on its own, since it's a static page with no server behind it.
+Bridging that last step (an in-page "Sync from GitHub" button that loads
+`data/cleaned_clients.csv` directly from this repo) is a natural next
+addition once this pipeline is confirmed working.
