@@ -265,3 +265,27 @@ anything on its own, since it's a static page with no server behind it.
 Bridging that last step (an in-page "Sync from GitHub" button that loads
 `data/cleaned_clients.csv` directly from this repo) is a natural next
 addition once this pipeline is confirmed working.
+
+## Setting up Salesforce secrets without using GitHub's Settings page
+
+If clicking through GitHub's Secrets settings feels like a lot, there's a
+guided alternative: `scripts/setup_salesforce_secrets.py` asks a handful of
+plain questions (which Salesforce login method, the actual values) and
+handles the technical part — encrypting each value the way GitHub requires
+and sending it to your repo — automatically.
+
+```bash
+pip install -r requirements.txt
+python scripts/setup_salesforce_secrets.py
+```
+
+It'll ask for:
+- Your GitHub repo (e.g. `angelajdel/your-repo-name`)
+- A GitHub Personal Access Token (`repo` scope for classic tokens, or
+  "Secrets: Read and write" for fine-grained ones) — used once, right then,
+  to set things up
+- Your Salesforce login method and credentials
+
+Nothing you type is saved to a file or shown on screen again — it goes
+straight into GitHub's encrypted secrets storage. Revoke the GitHub token
+afterward, same as with any setup task.
