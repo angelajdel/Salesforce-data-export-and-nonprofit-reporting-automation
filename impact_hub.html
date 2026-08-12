@@ -850,15 +850,15 @@ function checkReady() {
   document.getElementById('runCleanBtn').disabled = !(state.clients.records.length || state.donors.records.length);
 }
 
-document.getElementById('syncFromGithubBtn').addEventListener('click', async () => {
+async function syncFromGithub(auto) {
   const repo = document.getElementById('githubRepoInput').value.trim();
   const statusEl = document.getElementById('githubSyncStatus');
   const btn = document.getElementById('syncFromGithubBtn');
-  if (!repo) { statusEl.textContent = 'Enter a repo in the format owner/name first.'; return; }
+  if (!repo) { if (!auto) statusEl.textContent = 'Enter a repo in the format owner/name first.'; return false; }
 
   btn.disabled = true;
-  btn.textContent = 'Syncing...';
-  statusEl.textContent = '';
+  btn.textContent = auto ? 'Checking for Salesforce data...' : 'Syncing...';
+  statusEl.textContent = auto ? 'Automatically checking for the latest synced Salesforce data...' : '';
 
   const base = `https://raw.githubusercontent.com/${repo}/main/data/`;
   let clientsOk = false, donorsOk = false;
@@ -883,20 +883,42 @@ document.getElementById('syncFromGithubBtn').addEventListener('click', async () 
   btn.textContent = 'Sync now';
 
   if (!clientsOk && !donorsOk) {
-    statusEl.textContent = 'Could not find data there yet. Make sure the automated Salesforce sync has run at least once (check the repo\'s Actions tab), and that the repo is public.';
-  } else {
-    const parts = [];
-    if (clientsOk) parts.push('clients');
-    if (donorsOk) parts.push('donors');
-    statusEl.textContent = '✓ Synced ' + parts.join(' and ') + ' from GitHub. Continue to "Clean this data" below.';
+    statusEl.textContent = auto
+      ? 'No automated Salesforce data found yet — bring in this month\'s export manually below, or check back once the sync has run.'
+      : 'Could not find data there yet. Make sure the automated Salesforce sync has run at least once (check the repo\'s Actions tab), and that the repo is public.';
+    return false;
   }
-});
+
+  const parts = [];
+  if (clientsOk) parts.push('clients');
+  if (donorsOk) parts.push('donors');
+  statusEl.textContent = (auto ? '✓ Automatically loaded ' : '✓ Synced ') + parts.join(' and ') +
+    (auto ? ' from Salesforce (via GitHub).' : ' from GitHub. Continue to "Clean this data" below.');
+  return true;
+}
+
+document.getElementById('syncFromGithubBtn').addEventListener('click', () => syncFromGithub(false));
 
 document.getElementById('runCleanBtn').addEventListener('click', () => {
   runCleaning();
   unlockStep(4); unlockStep(5); unlockStep(6);
   goToStep(4);
 });
+
+// Automatically try to connect to Salesforce (via the synced GitHub data) the moment
+// the page loads -- no manual click, no CSV drag-and-drop needed, if the automation
+// is set up and has run at least once. Falls back to the manual import UI silently
+// if there's no data there yet.
+(async function autoConnectOnLoad() {
+  const synced = await syncFromGithub(true);
+  if (synced) {
+    runCleaning();
+    unlockStep(4); unlockStep(5); unlockStep(6);
+    goToStep(5);
+    renderOutcomeConfigUI();
+    renderOutcomes();
+  }
+})();
 
 /* ============================= CLEANING ============================= */
 
