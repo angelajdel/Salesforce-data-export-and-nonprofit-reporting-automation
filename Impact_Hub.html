@@ -138,7 +138,7 @@
   }
 
   /* ---------- dashboard ---------- */
-  .kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:30px; }
+  .kpi-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:16px; margin-bottom:30px; }
   @media(max-width:900px){ .kpi-grid{ grid-template-columns:repeat(2,1fr); } }
   .kpi{ background:var(--card); border-radius:12px; padding:20px 18px; border:1px solid var(--card-line); }
   .kpi .val{ font-family:var(--mono); font-size:30px; font-weight:600; color:var(--teal-dark); font-variant-numeric:tabular-nums; }
@@ -1573,12 +1573,14 @@ function renderGrants() {
   const completed = state.grants.filter(grantIsDone).length;
   const overdue = state.grants.filter(g => !grantIsDone(g) && daysUntil(g.dueDate) < 0).length;
   const dueThisWeek = state.grants.filter(g => !grantIsDone(g) && daysUntil(g.dueDate) >= 0 && daysUntil(g.dueDate) <= 7).length;
+  const upcoming = state.grants.filter(g => !grantIsDone(g) && daysUntil(g.dueDate) > 7).length;
   const onTrackPct = total === 0 ? 100 : Math.round(((total - overdue) / total) * 100);
 
   document.getElementById('grantKpis').innerHTML =
-    kpiCard(completed, 'Grants completed') +
+    kpiCard(completed, 'Completed') +
     kpiCard(dueThisWeek, 'Due this week') +
     kpiCard(overdue, 'Overdue') +
+    kpiCard(upcoming, 'Upcoming') +
     kpiCard(total, 'Total tracked');
 
   const fill = document.getElementById('onTrackFill');

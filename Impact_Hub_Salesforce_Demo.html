@@ -60,7 +60,7 @@
   h2.section-title{font-family:var(--serif);font-size:23px;font-weight:700;margin:0 0 6px;}
   p.section-desc{color:var(--slate);font-size:14.5px;margin:0 0 22px;max-width:640px;line-height:1.5;}
 
-  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:16px;margin-bottom:30px;}
   @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
   .kpi{background:var(--card);border-radius:12px;padding:20px 18px;border:1px solid var(--card-line);position:relative;overflow:hidden;transition:background .3s;}
   .kpi .val{font-family:var(--mono);font-size:30px;font-weight:600;color:var(--teal-dark);font-variant-numeric:tabular-nums;transition:opacity .15s;}
@@ -571,12 +571,14 @@ function renderGrants() {
   const completed = grants.filter(grantIsDone).length;
   const overdue = grants.filter(g => !grantIsDone(g) && daysUntil(g.dueDate) < 0).length;
   const dueThisWeek = grants.filter(g => !grantIsDone(g) && daysUntil(g.dueDate) >= 0 && daysUntil(g.dueDate) <= 7).length;
+  const upcoming = grants.filter(g => !grantIsDone(g) && daysUntil(g.dueDate) > 7).length;
   const onTrackPct = total === 0 ? 100 : Math.round(((total - overdue) / total) * 100);
 
   document.getElementById('grantKpis').innerHTML =
-    kpiCard(completed, 'Grants completed') +
+    kpiCard(completed, 'Completed') +
     kpiCard(dueThisWeek, 'Due this week') +
     kpiCard(overdue, 'Overdue') +
+    kpiCard(upcoming, 'Upcoming') +
     kpiCard(total, 'Total tracked');
 
   const fill = document.getElementById('onTrackFill');
